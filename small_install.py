@@ -5,14 +5,32 @@ import os
 import shutil
 import json
 
-bin_path = os.path.expanduser('~/.paths.json')
-with open(bin_path, 'r') as f:
-    PTH = json.load(f)
-base_bin_path = os.path.expanduser(PTH['small_install_bin'])
-base_bin_pypath = os.path.expanduser(PTH['small_install_pybin'])
+path_file = os.path.expanduser('~/.paths.json')
+if os.path.exists(path_file):
+    with open(path_file, 'r') as f:
+        PTH = json.load(f)
+    base_bin_path = os.path.expanduser(PTH['small_install_bin'])
+    base_bin_pypath = os.path.expanduser(PTH['small_install_pybin'])
+else:
+    print('First time setup.')
+    print('Writing {}'.format(path_file))
+    base_bin_path = os.path.expanduser('~/bin')
+    base_bin_pypath = os.path.expanduser('~/miniconda2/bin')
+    s = '\{\n\t"small_install_bin": "{}",\n'.format(base_bin_path)
+    s += '\t"small_install_pybin": "{}"\n\}\n'.format(base_bin_pypath)
+    with open(paths_json_file, 'w') as f:
+        f.write(s)
+    print("If this file is correct, it will work.  Otherwise you'll need to edit it.")
+    print(s)
+    try:
+        shutil.copy('code_path.py', os.path.join(base_bin_pypath, 'code_path.py'))
+    except SOMEerror:
+        print("WHAT TO DO")
+        return 1
 
 module_help = "Name of module -- action depends on extension:\n\texclude py:  make bash, copy to {}\n\tinclude py:  just copy file to {}"\
               .format(base_bin_path, base_bin_pypath)
+
 ap = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
 ap.add_argument('module', help=module_help)
 ap.add_argument('-i', '--invoke_name', help="Name of bash wrapper. (*)", default='default')
