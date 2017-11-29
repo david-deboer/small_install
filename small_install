@@ -1,0 +1,2 @@
+#! /bin/sh
+/Users/ddeboer/Documents/ubase/Code/small_install/small_install.py $1 $2 $3
