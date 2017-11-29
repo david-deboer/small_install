@@ -14,19 +14,21 @@ if os.path.exists(path_file):
 else:
     print('First time setup.')
     print('Writing {}'.format(path_file))
-    base_bin_path = os.path.expanduser('~/bin')
-    base_bin_pypath = os.path.expanduser('~/miniconda2/bin')
-    s = '\{\n\t"small_install_bin": "{}",\n'.format(base_bin_path)
-    s += '\t"small_install_pybin": "{}"\n\}\n'.format(base_bin_pypath)
-    with open(paths_json_file, 'w') as f:
+    base_bin_path = '~/bin'
+    base_bin_pypath = '~/miniconda2/bin'
+    s = '{{\n\t"small_install_bin": "{}",\n'.format(base_bin_path)
+    s += '\t"small_install_pybin": "{}"\n}}\n'.format(base_bin_pypath)
+    with open(path_file, 'w') as f:
         f.write(s)
-    print("If this file is correct, it will work.  Otherwise you'll need to edit it.")
+    print("Check if this file is correct.")
     print(s)
     try:
         shutil.copy('code_path.py', os.path.join(base_bin_pypath, 'code_path.py'))
-    except SOMEerror:
-        print("WHAT TO DO")
-        return 1
+    except IOError:
+        print("Edit {} for correct paths and rerun.".format(path_file))
+        exit(1)
+    base_bin_path = os.path.expanduser(base_bin_path)
+    base_bin_pypath = os.path.expanduser(base_bin_pypath)
 
 module_help = "Name of module -- action depends on extension:\n\texclude py:  make bash, copy to {}\n\tinclude py:  just copy file to {}"\
               .format(base_bin_path, base_bin_pypath)
