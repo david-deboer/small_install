@@ -7,15 +7,25 @@ import json
 
 
 def set(project_name):
-    with open(os.path.expanduser('~/.paths.json'), 'r') as f:
-        path_data = json.load(f)
-    sys_path = os.path.expanduser(path_data.get(project_name))
-    sys.path.append(sys_path)
-    return sys_path
+    path_file = os.path.expanduser('~/.paths.json')
+    if os.path.exists(path_file):
+        with open(path_file, 'r') as f:
+            path_data = json.load(f)
+        try:
+            sys_path = os.path.expanduser(path_data.get(project_name))
+            sys.path.append(sys_path)
+            return sys_path
+        except KeyError:
+            print("{} not found.".format(project_name))
+            return None
+    print("{} not found.".format(path_file))
+    return None
 
 
 def show():
-    with open(os.path.expanduser('~/.paths.json'), 'r') as f:
-        path_data = json.load(f)
-    for k in path_data.keys():
-        print("{:20s}:  {}".format(k, os.path.expanduser(path_data[k])))
+    path_file = os.path.expanduser('~/.paths.json')
+    if os.path.exists(path_file):
+        with open(path_file, 'r') as f:
+            path_data = json.load(f)
+            for k in path_data.keys():
+                print("{:20s}:  {}".format(k, os.path.expanduser(path_data[k])))
