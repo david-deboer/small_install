@@ -12,11 +12,11 @@ import code_path
 This scheme is a light-weight install package for small stuff.
 If the 'package' has a .py extension, it just copies it to the python (often miniconda2) bin.  Note the
     bin is set in '.paths.json'.
-If a package needs more files, use the .paths.json-code_path.py stuff.
+If a package needs more files, use the .paths.json-code_path.py stuff.  This puts code_path.py path into
+    the site-packages directory
 If there is no extensions given:
-    if there is a python file of that name, it will make a bash wrapper and copy that to the "local" bin
-If the .paths.json and code_path.py stuff isn't installed, it tries to set it up for you when you install
-    this installer
+    if there is a python file of that name, it will make a bash wrapper and copy that to the local bin
+    otherwise it just copies that to the local bin
 """
 
 log_file = os.path.expanduser('~/.small_install_log.txt')
@@ -85,9 +85,12 @@ ap = argparse.ArgumentParser()
 ap.add_argument('module', help="Name of module to install.  If no extension, makes/installs wrapper of python.")
 ap.add_argument('-i', '--invoke_name', help="Name of bash wrapper or rename in bin.", default='default')
 ap.add_argument('-u', '--uninstall', help="Uninstall the module (i.e. rm from bin).", action='store_true')
+ap.add_argument('--version', help='Python version installed under. [2.7]', default='2.7')
 args = ap.parse_args()
 
+site_packages_path = os.path.expanduser('~/miniconda2/lib/python' + args.version + '/site-packages')
 path_file = os.path.expanduser('~/.paths.json')
+base_bin_path = None
 if os.path.exists(path_file):
     with open(path_file, 'r') as f:
         PTH = json.load(f)
@@ -97,12 +100,10 @@ if os.path.exists(path_file):
 if args.module == 'small_install':
     si_print("Installing 'small_install'")
     # Install .paths.json
-    if os.path.exists(path_file):
-        si_print("{} exists.".format(path_file))
-    else:
+    if base_bin_path is None:
         si_print('Writing {}'.format(path_file))
         base_bin_path = '~/bin'
-        base_bin_pypath = '~/miniconda2/lib/python2.7/site-packages'
+        base_bin_pypath = '~/miniconda2/bin'
         s = '{{\n\t"small_install_bin": "{}",\n'.format(base_bin_path)
         s += '\t"small_install_pybin": "{}"\n}}\n'.format(base_bin_pypath)
         with open(path_file, 'w') as f:
@@ -110,23 +111,30 @@ if args.module == 'small_install':
         print("===> Check if this file is correct.  Edit if not. <===")
         print(s)
         rerun()
+    else:
+        si_print("{} exists.".format(path_file))
+    # Install code_path.py
+    if site_packages_path not in sys.path:
+        si_print("{} is not in your python sys.path.".format(site_packages_path))
+        rerun()
+    si_cp('code_path.py', site_packages_path)
     # Check pypath
     if not os.path.exists(base_bin_pypath):
-        print("{} does not exist.  Edit the path or create the directory.".format(base_bin_pypath))
+        si_print("{} does not exist.".format(base_bin_pypath))
         rerun()
     if base_bin_pypath not in sys.path:
-        print("{} is not in your python sys.path.  Edit the path.".format(base_bin_pypath))
+        si_print("{} is not in your python sys.path.".format(base_bin_pypath))
         rerun()
-    # Install code_path.py
-    si_cp('code_path.py', base_bin_pypath)
-    si_print("Setting up 'code_path.py'.")
     # Check bin path
     if not os.path.exists(base_bin_path):
-        print("{} does not exist.  Edit the path or create the directory.".format(base_bin_path))
+        si_print("{} does not exist.  Edit the path or create the directory.".format(base_bin_path))
         print("If you edit the path, you will need to re-install 'small_install.py small_install'")
     if base_bin_path not in os.getenv('PATH'):
-        print("Add {} to your PATH environment.".format(base_bin_path))
+        si_print("Add {} to your PATH environment.".format(base_bin_path))
 
+
+if base_bin_path is None or not os.path.exists(os.path.join(site_packages_path, 'code_path.py')):
+    rerun()
 
 module_parse = args.module.split('.')
 if args.invoke_name == 'default':
