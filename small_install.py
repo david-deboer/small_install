@@ -6,7 +6,6 @@ import shutil
 import json
 import sys
 import datetime
-import code_path
 
 """
 This scheme is a light-weight install package for small stuff.
@@ -75,8 +74,12 @@ def si_wrapper(module, invoke):
     os.chmod(invoke, 0744)
 
 
-def rerun():
-    print("===> Re-run 'small_install.py small_install' <===")
+def rerun(e=None):
+    if e is None:
+        e = 'R'
+    else:
+        e = e + ' and r'
+    print("===> {}e-run 'small_install.py small_install' <===".format(e))
     sys.exit()
 
 
@@ -91,6 +94,7 @@ args = ap.parse_args()
 site_packages_path = os.path.expanduser('~/miniconda2/lib/python' + args.version + '/site-packages')
 path_file = os.path.expanduser('~/.paths.json')
 base_bin_path = None
+
 if os.path.exists(path_file):
     with open(path_file, 'r') as f:
         PTH = json.load(f)
@@ -112,23 +116,23 @@ if args.module == 'small_install':
         print(s)
         rerun()
     else:
-        si_print("{} exists.".format(path_file))
+        si_print("{} exists and will be used for small_install.".format(path_file))
     # Install code_path.py
     if site_packages_path not in sys.path:
         si_print("{} is not in your python sys.path.".format(site_packages_path))
-        rerun()
+        rerun('Fix path')
     si_cp('code_path.py', site_packages_path)
     # Check pypath
     if not os.path.exists(base_bin_pypath):
         si_print("{} does not exist.".format(base_bin_pypath))
-        rerun()
+        rerun('Fix path')
     if base_bin_pypath not in sys.path:
         si_print("{} is not in your python sys.path.".format(base_bin_pypath))
-        rerun()
+        rerun('Fix path')
     # Check bin path
     if not os.path.exists(base_bin_path):
-        si_print("{} does not exist.  Edit the path or create the directory.".format(base_bin_path))
-        print("If you edit the path, you will need to re-install 'small_install.py small_install'")
+        si_print("{} does not exist.".format(base_bin_path))
+        rerun('Fix path')
     if base_bin_path not in os.getenv('PATH'):
         si_print("Add {} to your PATH environment.".format(base_bin_path))
 
