@@ -1,2 +1,2 @@
 #! /bin/sh
-/Users/ddeboer/Documents/ubase/Code/small_install/small_install.py $1 $2 $3
+/Users/ddeboer/Documents/ubase/Code/small_install/small_install.py $1 $2 $3 $4 $5

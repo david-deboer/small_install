@@ -27,5 +27,6 @@ def show():
     if os.path.exists(path_file):
         with open(path_file, 'r') as f:
             path_data = json.load(f)
-            for k in path_data.keys():
-                print("{:20s}:  {}".format(k, os.path.expanduser(path_data[k])))
+            col1 = max([len(x) for x in path_data.keys()]) + 3
+            for k in sorted(path_data.keys()):
+                print("{:{col1}}  {}".format(k, os.path.expanduser(path_data[k]), col1=col1))

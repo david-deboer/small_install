@@ -25,11 +25,11 @@ if os.path.exists(log_file):
         print("{} is large ({})".format(log_file, checking_log.st_size))
 
 
-def si_print(v, only_log=False, ):
+def si_print(v, only_log=False):
     if not only_log:
         print(v)
     logTime = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d %H:%M:%S')
-    v = v + ' ' * (85 - len(v)) + logTime
+    v = logTime + '   ' + v
     with open(log_file, 'a') as f:
         print(v, file=f)
 
@@ -45,8 +45,11 @@ def si_cp(local, path, remote='default'):
 
 def si_rm(path, remote):
     remote = os.path.join(os.path.expanduser(path), remote)
-    os.remove(remote)
-    slog = 'removing:  {}'.format(remote)
+    if os.path.exists(remote):
+        os.remove(remote)
+        slog = 'removing:  {}'.format(remote)
+    else:
+        slog = '{} not found.'.format(remote)
     si_print(slog, only_log=True)
 
 
@@ -126,9 +129,6 @@ if args.module == 'small_install':
     if not os.path.exists(base_bin_pypath):
         si_print("{} does not exist.".format(base_bin_pypath))
         rerun('Fix path')
-    if base_bin_pypath not in sys.path:
-        si_print("{} is not in your python sys.path.".format(base_bin_pypath))
-        rerun('Fix path')
     # Check bin path
     if not os.path.exists(base_bin_path):
         si_print("{} does not exist.".format(base_bin_path))
@@ -148,6 +148,7 @@ if args.invoke_name == 'default':
 if len(module_parse) == 2 and module_parse[1] == 'py':
     if args.uninstall:
         si_rm(base_bin_pypath, args.invoke_name)
+        si_rm(base_bin_pypath, args.invoke_name + 'c')
     else:
         si_cp(args.module, base_bin_pypath, args.invoke_name)
 elif len(module_parse) == 1:
