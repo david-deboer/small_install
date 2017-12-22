@@ -6,6 +6,7 @@ import shutil
 import json
 import sys
 import datetime
+import code_path
 
 """
 This scheme is a light-weight install package for small stuff.
@@ -29,7 +30,7 @@ def si_print(v, only_log=False, ):
     if not only_log:
         print(v)
     logTime = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d %H:%M:%S')
-    v = v + ' ' * (65 - len(v)) + logTime
+    v = v + ' ' * (85 - len(v)) + logTime
     with open(log_file, 'a') as f:
         print(v, file=f)
 
@@ -48,11 +49,6 @@ def si_rm(path, remote):
     os.remove(remote)
     slog = 'removing:  {}'.format(remote)
     si_print(slog, only_log=True)
-
-
-def rerun_msg():
-    rerun_msg = "===> re-run 'small_install.py small_install' <==="
-    si_print(rerun_msg)
 
 
 def si_wrapper(module, invoke):
@@ -79,50 +75,63 @@ def si_wrapper(module, invoke):
     os.chmod(invoke, 0744)
 
 
+def rerun():
+    print("===> Re-run 'small_install.py small_install' <===")
+    sys.exit()
+
+
+# ############################################################################################################# #
+ap = argparse.ArgumentParser()
+ap.add_argument('module', help="Name of module to install.  If no extension, makes/installs wrapper of python.")
+ap.add_argument('-i', '--invoke_name', help="Name of bash wrapper or rename in bin.", default='default')
+ap.add_argument('-u', '--uninstall', help="Uninstall the module (i.e. rm from bin).", action='store_true')
+args = ap.parse_args()
+
 path_file = os.path.expanduser('~/.paths.json')
 if os.path.exists(path_file):
     with open(path_file, 'r') as f:
         PTH = json.load(f)
     base_bin_path = os.path.expanduser(PTH['small_install_bin'])
     base_bin_pypath = os.path.expanduser(PTH['small_install_pybin'])
-else:
-    si_print("First time setup of '.paths.json'")
-    si_print('Writing {}'.format(path_file))
-    base_bin_path = '~/bin'
-    base_bin_pypath = '~/miniconda2/bin'
-    s = '{{\n\t"small_install_bin": "{}",\n'.format(base_bin_path)
-    s += '\t"small_install_pybin": "{}"\n}}\n'.format(base_bin_pypath)
-    with open(path_file, 'w') as f:
-        f.write(s)
-    si_print("Check if this file is correct.  Edit if not.")
-    si_print(s)
-    rerun_msg()
-    sys.exit()
 
-if not os.path.exists(os.path.join(base_bin_pypath, 'code_path.py')):
-    if os.path.exists('code_path.py'):
-        si_cp('code_path.py', base_bin_pypath)
-        si_print("Setting up code_path.py.")
+if args.module == 'small_install':
+    si_print("Installing 'small_install'")
+    # Install .paths.json
+    if os.path.exists(path_file):
+        si_print("{} exists.".format(path_file))
     else:
-        si_print("'code_path.py' does not exist.")
-    rerun_msg()
-    sys.exit()
+        si_print('Writing {}'.format(path_file))
+        base_bin_path = '~/bin'
+        base_bin_pypath = '~/miniconda2/lib/python2.7/site-packages'
+        s = '{{\n\t"small_install_bin": "{}",\n'.format(base_bin_path)
+        s += '\t"small_install_pybin": "{}"\n}}\n'.format(base_bin_pypath)
+        with open(path_file, 'w') as f:
+            f.write(s)
+        print("===> Check if this file is correct.  Edit if not. <===")
+        print(s)
+        rerun()
+    # Check pypath
+    if not os.path.exists(base_bin_pypath):
+        print("{} does not exist.  Edit the path or create the directory.".format(base_bin_pypath))
+        rerun()
+    if base_bin_pypath not in sys.path:
+        print("{} is not in your python sys.path.  Edit the path.".format(base_bin_pypath))
+        rerun()
+    # Install code_path.py
+    si_cp('code_path.py', base_bin_pypath)
+    si_print("Setting up 'code_path.py'.")
+    # Check bin path
+    if not os.path.exists(base_bin_path):
+        print("{} does not exist.  Edit the path or create the directory.".format(base_bin_path))
+        print("If you edit the path, you will need to re-install 'small_install.py small_install'")
+    if base_bin_path not in os.getenv('PATH'):
+        print("Add {} to your PATH environment.".format(base_bin_path))
 
-module_help = """
-Name of module -- action depends on extension:
-    none:  make bash if .py exists, copy to {}
-    .py:  just copy file to {}
-""".format(base_bin_path, base_bin_pypath)
-
-ap = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
-ap.add_argument('module', help=module_help)
-ap.add_argument('-i', '--invoke_name', help="Name of bash wrapper or rename in bin.", default='default')
-ap.add_argument('-u', '--uninstall', help="Uninstall the module (i.e. rm from bin).", action='store_true')
-args = ap.parse_args()
 
 module_parse = args.module.split('.')
 if args.invoke_name == 'default':
     args.invoke_name = args.module
+
 
 if len(module_parse) == 2 and module_parse[1] == 'py':
     if args.uninstall:
