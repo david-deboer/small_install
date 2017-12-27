@@ -137,8 +137,10 @@ if args.module == 'small_install':
         si_print("Add {} to your PATH environment.".format(base_bin_path))
 
 
-if base_bin_path is None or not os.path.exists(os.path.join(site_packages_path, 'code_path.py')):
-    rerun()
+if base_bin_path is None:
+    rerun('Install base paths')
+if not os.path.exists(os.path.join(site_packages_path, 'code_path.py')):
+    rerun('Install code_path.py')
 
 module_parse = args.module.split('.')
 if args.invoke_name == 'default':
